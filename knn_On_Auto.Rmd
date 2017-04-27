@@ -1,0 +1,90 @@
+---
+title: "Assignment3"
+author: "Thomas Dang"
+date: "March 22, 2017"
+output: pdf_document
+---
+
+#========SECTION 1=========
+```{r}
+library(ISLR)
+md <- median(Auto$mpg)
+Auto$mpglevel <- ifelse(Auto$mpg > md, 1, 0)
+names(Auto)
+Auto$mpglevel <- as.factor(Auto$mpglevel)
+```
+
+#========SECTION 2=========
+```{r}
+par(mfrow = c(2, 2))  
+plot(Auto$horsepower~Auto$mpg, main="relationship of mpg & horsepower", xlab="horsepower", ylab = "mpg", col=(Auto$mpglevel))
+plot(Auto$weight~Auto$mpg, main="relationship of mpg & weight", xlab="weight", ylab = "mpg", col=(Auto$mpglevel))
+plot(Auto$horsepower~Auto$mpglevel, main="relationship of mpglevel & horsepower", xlab="horsepower", ylab = "mpglevel")
+plot(Auto$weight~Auto$mpglevel, main="relationship of mpglevel & weight", xlab="weight", ylab = "mpglevel")
+```
+
+#========SECTION 3=========
+```{r}
+Auto <- Auto[,-c(1,9)]
+names(Auto)
+set.seed(1234)
+i <- sample(2, nrow(Auto), replace=TRUE, prob=c(0.75, 0.25))
+Auto.train <- Auto[i==1,]
+Auto.test <- Auto[i==2,]
+Auto.trainTarget <- Auto[i==1,8]
+```
+
+#========SECTION 4=========
+```{r}
+glm1<- glm(Auto.train$mpglevel~., data=Auto.train, family="binomial")
+glm1.probs<-predict(glm1, newdata=Auto.test, type="response")
+glm1.pred <- rep(0, nrow(Auto.test))
+glm1.pred[glm1.probs>0.5] = 1
+table(glm1.pred, Auto.test$mpglevel)
+mean(glm1.pred==Auto.test$mpglevel)
+```
+#========SECTION 5=========
+```{r}
+library(class)
+Auto_pred <- knn(train=Auto.train, test=Auto.test, cl=Auto.trainTarget, k=1)
+table(Auto_pred, Auto.test$mpglevel)
+mean(Auto_pred==Auto.test$mpglevel)
+```
+#========SECTION 6=========
+```{r}
+df <- data.frame(scale(Auto[,-c(8)]))
+set.seed(1234)
+t <- sample(2,nrow(df), replace=TRUE, prob=c(0.75, 0.25))
+df.train <- df[t==1,]
+df.test <- df[t==2,]
+scale_train_labels <- Auto[t==1,c(8)]
+scale_test_labels <- Auto[t==2,c(8)]
+fit <- knn(train=df.train, test=df.test, cl=scale_train_labels,k=1)
+table(fit, Auto.test$mpglevel)
+mean(fit==Auto.test$mpglevel)
+```
+#========SECTION 7=========
+```{r}
+#a. The relationship between mpg and horsepower is as horsepower becomes bigger, mpg
+#   becomes smaller. The relationship between mpg and weight is as weight becomes bigger,
+#   mpg becomes smaller. In both cases there seems to be a dividing line at around the mid
+#   20s for horsepower and weight values.
+
+#b. In the first pair mpg is comprised of hundreds of mpg values, which is why we get
+#   clusters of plots. In the second pair, we made mpg level a column comprise of binary
+#   1s and 0s. Because we are only working with 2 values, we get box plots.
+
+#c. Column name literally has no relation with mpg level or mpg values. There is no physical
+#   property that attaches to the column name.
+
+#d.`Column mpg is not needed because we made a new column called mpglevels, and we will use 
+#   mpglevels to perform knn since it uses binary 1s and 0s. We don't want to use hundreds of
+#   values from the mpg column because it is like cheating.
+
+#e. The logistic model showed an accuracy of about 92%. When we performed knn unscaled, we get an accuracy
+#   at about 87%. When we do knn scaled, we get an accuracy of 93.5%. knn unscaled performs the poorest.
+#   knn while scaled performs very similar to logistic regression.
+
+#d. Knn requires no training whereas logistic regression requires some training. Logistic regression predicts
+#   probabilities and knn just predicts the labels.
+```
