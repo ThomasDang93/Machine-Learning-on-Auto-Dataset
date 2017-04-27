@@ -1,0 +1,72 @@
+---
+title: "Assignment 4"
+author: "Thomas Dang"
+date: "March 31, 2017"
+output: pdf_document
+---
+ 
+```{r}
+#===SECTION 1===
+library(ISLR)
+library(e1071)
+md <- median(Auto$mpg)
+Auto$mpglevel <- ifelse(Auto$mpg > md, 1, 0)
+names(Auto)
+Auto$mpglevel <- as.factor(Auto$mpglevel)
+Auto <- Auto[,-c(1,9)]
+names(Auto)
+set.seed(1234)
+i <- sample(2, nrow(Auto), replace=TRUE, prob=c(0.75, 0.25))
+Auto.train <- Auto[i==1,]
+Auto.test <- Auto[i==2,]
+```
+
+```{r}
+#===SECTION 2===
+nb <- naiveBayes(Auto.train$mpglevel~.,data=Auto.train)
+nb_pred <- predict(nb, newdata=Auto.test)
+table(nb_pred, Auto.test$mpglevel)
+mean(nb_pred==Auto.test$mpglevel)
+```
+
+```{r}
+#===SECTION 3===
+set.seed(1)
+tune.out1 <- tune(svm, mpglevel ~ ., data = Auto, kernel = "linear", ranges = list(cost = c(0.01, 0.1, 1, 5, 10, 100, 1000)))
+summary(tune.out1)
+svm.linear = svm(mpglevel~., data=Auto.train, kernel="linear", cost=100, scale=FALSE)
+svm1_pred <- predict(svm.linear, newdata=Auto.test)
+table(svm1_pred, Auto.test$mpglevel)
+mean(svm1_pred==Auto.test$mpglevel)
+```
+
+```{r}
+#===SECTION 4===
+set.seed(1)
+tune.out2 <- tune(svm, mpglevel ~ ., data = Auto, kernel = "polynomial", ranges = list(cost = c(0.01, 0.1, 1, 5, 10, 100), degree = c(2, 3, 4)))
+summary(tune.out2)
+svm.poly <- svm(mpglevel~., data = Auto, kernel = "polynomial", cost = 5, degree = 3)
+svm2_pred <- predict(svm.poly, newdata=Auto.test)
+table(svm2_pred, Auto.test$mpglevel)
+mean(svm2_pred==Auto.test$mpglevel)
+```
+
+```{r}
+#===SECTION 5===
+set.seed(1)
+tune.out3 <- tune(svm, mpglevel ~ ., data=Auto, kernel = "radial", ranges = list(cost = c(0.01, 0.1, 1, 5, 10, 100), gamma = c(0.01, 0.1, 1, 5, 10, 100)))
+summary(tune.out3)
+svm.radial <- svm(mpglevel ~ ., data = Auto, kernel = "radial", cost = 1, gamma = 1)
+svm3_pred <- predict(svm.radial, newdata=Auto.test)
+table(svm3_pred, Auto.test$mpglevel)
+mean(svm3_pred==Auto.test$mpglevel)
+```
+
+```{r}
+#===SECTION 6===
+
+# a.) Naive Bayes has a mean accuracy of about 91%, svm linear has a mean accuracy of about 92%, svm polynomial has a mean accuracy of about 96%,
+#     and svm radial has an accuracy of about 97%. Overall the accuracy is in the order of Naive Bayes<svm linear<svm polynomial<svm
+# b.) Naive Bayes is much more simpler since you are just doing a bunch of counts. The disadvantage is that in NB you can't learn interactions between
+#     failures. SVM is more accurate a with better results regarding overfitting. The main disadvantage is that it runs slower than NB.
+```
